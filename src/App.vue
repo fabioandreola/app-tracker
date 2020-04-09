@@ -18,6 +18,7 @@
   import appBar from './components/appBar.vue';
   import taskList from './components/taskList.vue';
   import addTask from './components/addTask.vue';
+  import {db, getUser} from '@/fb'
 
   export default {
     props: {
@@ -25,13 +26,20 @@
     },
     methods: {
       addToGoal: function (id) {
-        let task = this.goals.find(item => item.id == id);
-        console.log(task);
-        if(task.currentDayGoalItem.doneDayQty < task.tasksPerDay){
-          task.currentDayGoalItem.doneDayQty++;
+        let todayTask = this.todayTasks.find(item => item.id == id);
+        let task = this.tasks.find(item => item.id == todayTask.task_id);
+        if(todayTask.doneDayQty < task.timesPerDay){
+          todayTask.doneDayQty++;
           task.tasksCompleted++;
         }
       }
+    },
+    created: function() {
+      let self = this;
+      getUser().then(function(uid){
+        console.log("User id: " + uid)
+        self.uid = uid
+      })
     },
     components: {
         'app-bar': appBar,
@@ -41,90 +49,55 @@
     computed: {
         items: function() {
           let items = [];
-          this.goals.forEach(el => {
-            let task = JSON.parse(JSON.stringify(el));
-            task.overallProgress = Math.floor((el.tasksCompleted / el.totalTasks) * 100);
-            task.dailyProgress = Math.floor((el.currentDayGoalItem.doneDayQty / el.tasksPerDay) * 100);
-            if(el.currentDayGoalItem.doneDayQty == el.tasksPerDay){
-              task.status = 'complete';
+          this.todayTasks.forEach(el => {
+            let task = this.tasks.find(t => t.id == el.task_id);
+
+            let item = {
+              id: task.id,
+              title: task.name,
+              startDate: task.startDate,
+              endDate: task.endDate,
+              template: task.template,
+              tasksPerDay: task.timesPerDay,
+              totalTasks: task.totalTasks,
+              icon: {
+                color: task.icon.color,
+                name: task.icon.name
+              },
+              currentDayGoalItem: {
+                day: el.day,
+                doneDayQty: el.doneDayQty,
+                id: el.id
+              },
+              overallProgress: Math.floor((task.tasksCompleted / task.totalTasks) * 100),
+              dailyProgress: Math.floor((el.doneDayQty / task.timesPerDay) * 100)
+            }
+
+            if(el.doneDayQty == task.timesPerDay){
+              item.status = 'complete';
             }
             else{
-              task.status = 'ongoing';
+              item.status = 'ongoing';
             }
-           items.push(task)
+           items.push(item)
           });
 
-          console.log(items)
           return items;
         }
-
     },
-    mounted: function(){
-
-      this.goals = [{
-        id: 1,
-        title: 'Hair Product',
-        startDate: "",
-        endDate: "",
-        template: "",
-        tasksPerDay: 5,
-        icon: {
-            name: 'mdi-pill',
-            color: 'green'
-        },
-        totalTasks: 5,
-        tasksCompleted: 0,
-        currentDayGoalItem: {
-            day: "",
-            doneDayQty: 0,
-            times: ["","",""],
-            notes: ""
-        }  
-      },
-      {
-        id: 2,
-        title: 'Excercise',
-        startDate: "",
-        endDate: "",
-        template: "",
-        tasksPerDay: 5,
-        icon: {
-            name: 'mdi-weight-lifter',
-            color: 'blue'
-        },
-        totalTasks: 5,
-        tasksCompleted: 0,
-        currentDayGoalItem: {
-            day: "",
-            doneDayQty: 0,
-            times: ["","",""],
-            notes: ""
-        }  
-      },
-      {
-        id: 3,
-        title: 'Drink Water',
-        startDate: "",
-        endDate: "",
-        template: "",
-        tasksPerDay: 5,
-        icon: {
-            name: 'mdi-glass-pint-outline',
-            color: 'orange'
-        },
-        totalTasks: 5,
-        tasksCompleted: 0,
-        currentDayGoalItem: {
-            day: "",
-            doneDayQty: 0,
-            times: ["","",""],
-            notes: ""
-        }  
-      }]
+    watch: {
+      uid: {
+        handler(uid) {
+          this.$bind('tasks', db.collection('users').doc(uid).collection('tasks'));
+          this.$bind('todayTasks', db.collection('users').doc(uid).collection('taskDetails'));
+        }
+      }
     },
     data: () => ({
       dialog: false,
-      goals: []
+      tasks: [{name: "empty"}],
+      todayTasks: [],
+      uid: ""
     }),
   }
 </script>
