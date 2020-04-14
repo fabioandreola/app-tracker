@@ -62,13 +62,14 @@
             <v-card-actions>
                 <v-spacer />
                 <v-btn text color="primary" @click="closeDialog">Cancel</v-btn>
-                <v-btn text @click="closeDialog">Save</v-btn>
+                <v-btn text @click="addNewTask">Save</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script>
+    import {functions} from '@/fb'
     export default {
         props: {
             dialog: Boolean
@@ -141,6 +142,32 @@
         methods: {
             closeDialog: function () {
                 this.$emit('closeDialog');
+            },
+            addNewTask: function () {
+                const addTask = functions.httpsCallable('addTask');
+                addTask({ 
+                    name: this.taskName,
+                    icon: {
+                        color: this.icons[this.selectedIcon].color,
+                        name: this.icons[this.selectedIcon].icon
+                    },
+                    startDate: this.startDate,
+                    endDate: this.endDate,
+                    template: this.templateSelect,
+                    timesPerDay: this.timesPerDaySelect
+                })
+                .then(() => {
+                    this.startDate = new Date().toISOString().substr(0, 10);
+                    this.endDate = new Date().toISOString().substr(0, 10);
+                    this.selectedIcon = 0;
+                    this.templateSelect = "Daily";
+                    this.timesPerDaySelect = 1;
+                    this.taskName = "";
+                    this.$emit('closeDialog');
+                })
+                .catch(error => {
+                    console.log(error.message);
+                });
             }
         }
     }

@@ -18,7 +18,7 @@
   import appBar from './components/appBar.vue';
   import taskList from './components/taskList.vue';
   import addTask from './components/addTask.vue';
-  import {db, getUser} from '@/fb'
+  import {db, getUser, functions} from '@/fb'
 
   export default {
     props: {
@@ -28,9 +28,16 @@
       addToGoal: function (id) {
         let todayTask = this.todayTasks.find(item => item.id == id);
         let task = this.tasks.find(item => item.id == todayTask.task_id);
+        const completeTask = functions.httpsCallable('completeTask');
         if(todayTask.doneDayQty < task.timesPerDay){
+
           todayTask.doneDayQty++;
           task.tasksCompleted++;
+
+          completeTask({
+              task_id: task.id,
+              taskDetail_id: todayTask.id
+          });
         }
       }
     },
@@ -51,35 +58,36 @@
           let items = [];
           this.todayTasks.forEach(el => {
             let task = this.tasks.find(t => t.id == el.task_id);
+            if(task){
+                  let item = {
+                  id: task.id,
+                  title: task.name,
+                  startDate: task.startDate,
+                  endDate: task.endDate,
+                  template: task.template,
+                  tasksPerDay: task.timesPerDay,
+                  totalTasks: task.totalTasks,
+                  icon: {
+                    color: task.icon.color,
+                    name: task.icon.name
+                  },
+                  currentDayGoalItem: {
+                    day: el.day,
+                    doneDayQty: el.doneDayQty,
+                    id: el.id
+                  },
+                  overallProgress: Math.floor((task.tasksCompleted / task.totalTasks) * 100),
+                  dailyProgress: Math.floor((el.doneDayQty / task.timesPerDay) * 100)
+                }
 
-            let item = {
-              id: task.id,
-              title: task.name,
-              startDate: task.startDate,
-              endDate: task.endDate,
-              template: task.template,
-              tasksPerDay: task.timesPerDay,
-              totalTasks: task.totalTasks,
-              icon: {
-                color: task.icon.color,
-                name: task.icon.name
-              },
-              currentDayGoalItem: {
-                day: el.day,
-                doneDayQty: el.doneDayQty,
-                id: el.id
-              },
-              overallProgress: Math.floor((task.tasksCompleted / task.totalTasks) * 100),
-              dailyProgress: Math.floor((el.doneDayQty / task.timesPerDay) * 100)
+                if(el.doneDayQty == task.timesPerDay){
+                  item.status = 'complete';
+                }
+                else{
+                  item.status = 'ongoing';
+                }
+                items.push(item)
             }
-
-            if(el.doneDayQty == task.timesPerDay){
-              item.status = 'complete';
-            }
-            else{
-              item.status = 'ongoing';
-            }
-           items.push(item)
           });
 
           return items;
@@ -89,7 +97,7 @@
       uid: {
         handler(uid) {
           this.$bind('tasks', db.collection('users').doc(uid).collection('tasks'));
-          this.$bind('todayTasks', db.collection('users').doc(uid).collection('taskDetails'));
+          this.$bind('todayTasks', db.collection('users').doc(uid).collection('taskDetails').where("day", "==", new Date().toISOString().slice(0, 10)));
         }
       }
     },

@@ -1,6 +1,7 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
-import 'firebase/auth'
+import 'firebase/auth';
+import 'firebase/functions';
 
 // Your web app's Firebase configuration
 var config = {
@@ -32,5 +33,6 @@ async function getUser(){
 
 const db = firebase.firestore();
 const auth = firebase.auth();
+const functions = firebase.functions();
 
-export { db, auth, getUser };
+export { db, auth, getUser, functions };

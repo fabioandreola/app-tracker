@@ -2,7 +2,7 @@
     <div>
         <h3 class="grey--text text--darken-2 mb-1">{{header}}</h3>
         <v-divider></v-divider>
-        <v-card flat v-for="item in items" :key="item.title">
+        <v-card flat v-for="item in items" :key="item.currentDayGoalItem.id">
             <v-layout row wrap :class="`pa-3 item ${item.status}`">
                 <v-flex xs2>
                     <v-icon size="40" v-bind:color="item.icon.color" @click="singleTaskDone(item.currentDayGoalItem.id)">{{item.icon.name}}</v-icon>
