@@ -5,14 +5,14 @@ import 'firebase/functions';
 
 // Your web app's Firebase configuration
 var config = {
-    apiKey: "",
+    apiKey: "AIzaSyDROmVRrvYWqtJ4PLV6rZdURpAz2oyqJ84",
     authDomain: "tracker-99159.firebaseapp.com",
     databaseURL: "https://tracker-99159.firebaseio.com",
     projectId: "tracker-99159",
     storageBucket: "tracker-99159.appspot.com",
-    messagingSenderId: "",
+    messagingSenderId: "536840347000",
     appId: "1:536840347000:web:6c0282bce1a2acaf4c3c8d",
-    measurementId: ""
+    measurementId: "G-VXCRVT3S44"
 };
 // Initialize Firebase
 firebase.initializeApp(config);

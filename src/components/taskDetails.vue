@@ -41,7 +41,7 @@
                                     <v-col>
                                         <v-progress-circular :rotate="-90" :size="45" :width="5"
                                             :value="(item.doneDayQty/task.tasksPerDay) * 100" color="primary">
-                                            {{(item.doneDayQty/task.tasksPerDay) * 100}}</v-progress-circular>
+                                            {{Math.floor((item.doneDayQty/task.tasksPerDay) * 100)}}</v-progress-circular>
                                     </v-col>
                                 </v-row>
 
