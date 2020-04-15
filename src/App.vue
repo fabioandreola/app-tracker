@@ -3,13 +3,13 @@
     <app-bar />
     <v-content>
       <v-container fluid>
-        <task-list :items="items" :header="'Today'" v-on:singleTaskDone="addToGoal($event)"></task-list>
+        <task-list :uid="uid" :items="items" :header="'Today'" v-on:singleTaskDone="addToGoal($event)"></task-list>
       </v-container>
     </v-content>
-    <v-btn bottom color="pink" dark fab fixed right @click="dialog = !dialog">
+    <v-btn bottom color="pink" dark fab fixed right @click="addTaskDialog = !addTaskDialog">
       <v-icon>mdi-plus</v-icon>
     </v-btn>
-    <add-task :dialog="dialog" v-on:closeDialog="dialog = false"></add-task>
+    <add-task :dialog="addTaskDialog" v-on:taskAdded="taskAdded"></add-task>
   </v-app>
 </template>
 
@@ -21,9 +21,6 @@
   import {db, getUser, functions} from '@/fb'
 
   export default {
-    props: {
-      source: String,
-    },
     methods: {
       addToGoal: function (id) {
         let todayTask = this.todayTasks.find(item => item.id == id);
@@ -39,6 +36,9 @@
               taskDetail_id: todayTask.id
           });
         }
+      },
+      taskAdded: function () {
+        this.addTaskDialog = false;
       }
     },
     created: function() {
@@ -102,7 +102,7 @@
       }
     },
     data: () => ({
-      dialog: false,
+      addTaskDialog: false,
       tasks: [{name: "empty"}],
       todayTasks: [],
       uid: ""

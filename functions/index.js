@@ -45,6 +45,21 @@ function authenticatedUsersOnly(context){
     }
 }
 
+exports.deleteTask = functions.https.onCall(async (data, context) => {
+    authenticatedUsersOnly(context);
+
+    const task =  admin.firestore().collection('users').doc(context.auth.uid).collection('tasks').doc(data.task_id);
+    const taskDetail =  admin.firestore().collection('users').doc(context.auth.uid).collection('taskDetails').where("task_id", "==", data.task_id);
+
+    const deleted = await taskDetail.get().then(snapshot => {
+        return snapshot.forEach(doc => {
+            doc.ref.delete();
+        });
+    });
+
+    return task.delete();
+});
+
 exports.completeTask = functions.https.onCall(async (data, context) => {
     authenticatedUsersOnly(context);
 

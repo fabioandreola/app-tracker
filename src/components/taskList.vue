@@ -7,14 +7,10 @@
                 <v-flex xs2>
                     <v-icon size="40" v-bind:color="item.icon.color" @click="singleTaskDone(item.currentDayGoalItem.id)">{{item.icon.name}}</v-icon>
                 </v-flex>
-                <v-flex xs8>
+                <v-flex xs8 @click="showTaskDetails(item.id)">
                     <h3>{{ item.title }}</h3>
                 </v-flex>
-                <v-flex xs2 class="right">
-                    <v-progress-circular :rotate="180" :size="50" :width="5" :value="item.dailyProgress" color="pink">
-                        {{ item.dailyProgress }}
-                    </v-progress-circular>
-                </v-flex>
+
                 <v-flex xs12>
                     <v-rating v-model="item.currentDayGoalItem.doneDayQty" v-bind:length="item.tasksPerDay" readonly>
                         <template v-slot:item="props">
@@ -28,18 +24,51 @@
             </v-layout>
             <v-divider></v-divider>
         </v-card>
+        <task-details v-if="viewTaskDetailsDialog" :dialog="viewTaskDetailsDialog" v-on:closeDialog="closeDetails" :task="currentTaskSelected" :uid="uid"></task-details>
     </div>
 </template>
 
 <script>
+import taskDetails from './taskDetails.vue';
+import { db } from '@/fb'
+
 export default {
+    components: {
+        'task-details': taskDetails
+    },
     props: {
         items: Array,
-        header: String
+        header: String,
+        uid: String
     },
     methods: {
-        singleTaskDone: function(id){
-            this.$emit('singleTaskDone', id)
+        singleTaskDone(id) {
+            this.$emit('singleTaskDone', id);
+        },
+        showTaskDetails(id) {
+            this.currentTaskSelected = this.items.find(task => task.id == id);
+            db.collection('users').doc(this.uid).collection('taskDetails').where("task_id", "==", this.currentTaskSelected.id).get()
+                .then(snapshot => {
+                    this.currentTaskSelected.taskDetails = snapshot.docs.map(doc => doc.data());
+                    this.currentTaskSelected.taskDetails.sort((dt1, dt2) => {
+                        if(new Date(dt1.day) > new Date(dt2.day)){
+                            return 1;
+                        } else {
+                            return -1;
+                        }
+                    });
+                    
+                    this.viewTaskDetailsDialog = true;
+                });
+        },
+        closeDetails() {
+            this.viewTaskDetailsDialog = false;
+        }
+    },
+    data() {
+        return {
+            viewTaskDetailsDialog: false,
+            currentTaskSelected: null
         }
     }
 }
@@ -53,10 +82,6 @@ export default {
 
   .item.complete {
     border-left: 4px solid #3cd1c2;
-  }
-
-  .item.overdue {
-    border-left: 4px solid #f83e70;
   }
 
   .item.ongoing {
