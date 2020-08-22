@@ -1,14 +1,16 @@
 <template>
   <v-app id="inspire">
-    <app-bar />
+    <app-bar />     
     <v-content>
-      <v-container fluid>
-        <task-list :uid="uid" :items="items" :header="'Today'" v-on:singleTaskDone="addToGoal($event)"></task-list>
+       <v-container fluid>
+        <task-list v-if="todayOnly" :uid="uid" :items="items" :header="'Today'" v-on:singleTaskDone="addToGoal($event)"></task-list>
+        <all-tasks v-if="!todayOnly" :uid="uid" :items="allTasks" :header="'All Tasks'"></all-tasks>
       </v-container>
     </v-content>
     <v-btn bottom color="pink" dark fab fixed right @click="addTaskDialog = !addTaskDialog">
       <v-icon>mdi-plus</v-icon>
     </v-btn>
+    <v-switch class="ml-4" fixed left v-model="todayOnly" :label="`Today Only`"></v-switch>
     <add-task :dialog="addTaskDialog" v-on:taskAdded="taskAdded"></add-task>
   </v-app>
 </template>
@@ -18,6 +20,7 @@
   import appBar from './components/appBar.vue';
   import taskList from './components/taskList.vue';
   import addTask from './components/addTask.vue';
+  import allTasks from './components/allTasks.vue';
   import {db, getUser, functions} from '@/fb'
 
   export default {
@@ -51,7 +54,8 @@
     components: {
         'app-bar': appBar,
         'task-list': taskList,
-        'add-task': addTask
+        'add-task': addTask,
+        'all-tasks': allTasks
     },
     computed: {
         items: function() {
@@ -91,6 +95,46 @@
           });
 
           return items;
+        },
+        allTasks: function() {
+          let items = [];
+          this.tasks.forEach(task => {
+              let item = {
+                  id: task.id,
+                  title: task.name,
+                  startDate: task.startDate,
+                  endDate: task.endDate,
+                  template: task.template,
+                  tasksPerDay: task.timesPerDay,
+                  totalTasks: task.totalTasks,
+                  icon: {
+                    color: task.icon.color,
+                    name: task.icon.name
+                  },
+                  overallProgress: Math.floor((task.tasksCompleted / task.totalTasks) * 100)
+              }
+
+              if (task.tasksCompleted === task.totalTasks){
+                item.status = 'complete';
+              }
+              else {
+                item.status = 'ongoing';
+              }
+                  
+              items.push(item)
+              items.sort((task1, task2) => {
+                        if(task1.status === 'complete'){
+                            return 1;
+                        } else if(task2.status === 'complete') {
+                            return -1;
+                        }
+                        else {
+                          return 0;
+                        }
+                    })
+          });
+
+          return items;
         }
     },
     watch: {
@@ -105,7 +149,8 @@
       addTaskDialog: false,
       tasks: [{name: "empty"}],
       todayTasks: [],
-      uid: ""
+      uid: "",
+      todayOnly: true
     }),
   }
 </script>
